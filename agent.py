@@ -1,3 +1,4 @@
+import json
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -59,10 +60,28 @@ while True:
   print(f"Run status: {run_status.status}")
 
   if run_status.status == 'requires_action':
-    print("Run requires action. Handle the required action.")
-    print(run_status['actions'][0]['message'])
+    print("Requires action")
+    required_actions = run_status.required_action.submit_tool_outputs.model_dump()
+    print(required_actions)
+    tools_output = []
+    for action in required_actions["tool_calls"]:
+      func_name = action["function"]["name"]
+      arguments = json.Loads(action["function"]["arguments"])
+      if func_name == "getInteriorDesignTrends":
+        output = getInteriorDesignTrends(arguments["Singapore"])
+        tools_output.append({
+          "id": action["id"],
+          "output": output
+        })
+      else:
+        print("Function not found")
+    client.beta.threads.runs.submit_tool_outputs(
+      thread_id=empty_thread.id,
+      run_id=run.id,
+      tool_outputs=tools_output
+    )
     
-  if run_status.status == 'completed':
+  elif run_status.status == 'completed':
     end_time = time.time()
     time_taken = end_time - start_time
     print(f"Time taken: {time_taken} seconds")
