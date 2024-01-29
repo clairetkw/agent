@@ -4,6 +4,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import time
 import requests
+from post import post_to_FB
 #from transformers import pipeline
 
 load_dotenv()
@@ -107,8 +108,7 @@ thread_message = client.beta.threads.messages.create(
 # run assistant
 run = client.beta.threads.runs.create(
   thread_id=empty_thread.id,
-  assistant_id=my_assistant.id,
-  instructions="Please address the user as Jane Doe. The user has a premium account.",
+  assistant_id=my_assistant.id
 )
 #print(run.model_dump_json(indent=2))
 
@@ -126,6 +126,7 @@ while True:
       role = msg.role
       content = msg.content[0].text.value
       print(f"{role.capitalize()}: {content}")
+      post_to_FB(content)
       break
     end_time = time.time()
     time_taken = end_time - start_time
